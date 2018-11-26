@@ -82,8 +82,18 @@ namespace Paramore.Brighter.MessagingGateway.AWSSQS
         public Message Receive(int timeoutInMilliseconds, int noOfMessagesToCache)
         {
             _logger.Value.DebugFormat("SqsMessageConsumer: Preparing to retrieve next message from queue {0}", _queueUrl);
+            Amazon.SQS.Model.Message rawSqsMessage;
 
-            var rawSqsMessage = new SqsQueuedRetriever(_credentials, _regionEndpoint).GetMessage(_queueUrl, timeoutInMilliseconds, noOfMessagesToCache).Result;
+            try
+            {
+                rawSqsMessage = new SqsQueuedRetriever(_credentials, _regionEndpoint)
+                    .GetMessage(_queueUrl, timeoutInMilliseconds, noOfMessagesToCache).Result;
+            }
+            catch (Exception exp)
+            {
+                _logger.Value.ErrorException("Exception retrieving message", exp);
+                return new Message();
+            }
 
             if(rawSqsMessage == null)
                 return new Message();
